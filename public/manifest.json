@@ -1,0 +1,25 @@
+{
+  "name": "Botes Depot - Gestion Intelligente de Stock",
+  "short_name": "Botes Depot",
+  "description": "Application de gestion d'inventaire professionnelle pour boissons. Gérez vos stocks par casiers, demi-casiers et bouteilles avec précision.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/placeholder.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "fr",
+  "scope": "/"
+}
