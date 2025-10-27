@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     <aside className={cn(
       "h-screen bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out",
       isMobile
-        ? (isCollapsed ? "w-0 overflow-hidden" : "w-80")
+        ? (isCollapsed ? "w-0 overflow-hidden" : "w-80 z-40")
         : (isCollapsed ? "w-16" : "w-60")
     )}>
       {/* Logo et Toggle */}
