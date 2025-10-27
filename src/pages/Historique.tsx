@@ -104,8 +104,8 @@ const Historique = () => {
       const total = (data || []).reduce((sum, item) => sum + Number(item.total_price || 0), 0);
       setTotalSalesAmount(total);
 
-      // Calculs pour admin/magasinier
-      if (role === 'admin' || role === 'magasinier') {
+      // Calculs pour admin
+      if (role === 'admin') {
         const profit = (data || []).reduce((sum, item) => {
           const cost = Number(item.products?.cost_per_bottle || 0);
           const qty = item.qty || 1;
@@ -150,7 +150,7 @@ const Historique = () => {
     doc.setFontSize(12);
     doc.text(`Total des ventes: ${totalRevenue.toFixed(2)} FC`, 14, 40);
 
-    if (role === 'admin' || role === 'magasinier') {
+    if (role === 'admin') {
       doc.text(`Bénéfice total: ${totalProfitAmount.toFixed(2)} FC`, 14, 46);
       doc.text(`Coût d'achat total: ${totalCOGSAmount.toFixed(2)} FC`, 14, 52);
       doc.text(`Nombre de transactions: ${sales.length}`, 14, 58);
@@ -160,7 +160,7 @@ const Historique = () => {
 
     // Table
     jspdfAutoTable.default(doc, {
-      startY: (role === 'admin' || role === 'magasinier') ? 65 : 55,
+      startY: (role === 'admin') ? 65 : 55,
       head: [["Date", "Produit", "Caissier", "Qté", "Prix Unit.", "Total"]],
       body: sales.map(item => [
         format(new Date(item.sales.created_at), "dd/MM/yy HH:mm"),
@@ -275,7 +275,7 @@ const Historique = () => {
               </CardContent>
             </Card>
 
-            {(role === 'admin' || role === 'magasinier') && (
+            {role === 'admin' && (
               <>
                 <Card className="border-border bg-card/50 shadow-card">
                   <CardContent className="flex items-center justify-between p-4">
