@@ -16,12 +16,30 @@ interface CartItem {
   bottles_per_case: number;
 }
 
+interface ProductWithStock {
+  id: number;
+  name: string;
+  price_per_bottle: number;
+  price_half_case?: number;
+  price_full_case?: number;
+  bottles_per_case: number;
+  is_active: boolean;
+  locker_stock: Array<{
+    quantity_bottles: number;
+    lockers: {
+      id: number;
+      name: string;
+    };
+  }>;
+  total_stock?: number;
+}
+
 const Caisse = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [lockers, setLockers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -40,19 +58,44 @@ const Caisse = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // Récupérer les produits avec leur stock
+      const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select("*")
+        .select(`
+          *,
+          locker_stock (
+            quantity_bottles,
+            lockers (id, name)
+          )
+        `)
         .eq("is_active", true);
 
-      if (error) throw error;
-      setProducts(data || []);
+      if (productsError) throw productsError;
+
+      // Calculer le stock total pour chaque produit
+      const productsWithStock = productsData.map(product => {
+        const totalStock = product.locker_stock?.reduce(
+          (sum, stock) => sum + (stock.quantity_bottles || 0), 0
+        ) || 0;
+        
+        return {
+          ...product,
+          total_stock: totalStock
+        };
+      });
+
+      setProducts(productsWithStock || []);
     } catch (error: any) {
+      console.error('Erreur lors du chargement des produits:', error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les produits",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,6 +157,22 @@ const Caisse = () => {
 
   const removeFromCart = (id: number, unitType: string) => {
     setCart(cart.filter(item => !(item.id === id && item.unit_type === unitType)));
+  };
+
+  // Fonction pour mettre à jour le stock d'un produit spécifique
+  const updateProductStock = (productId: number, quantityChange: number) => {
+    setProducts(currentProducts => 
+      currentProducts.map(product => {
+        if (product.id === productId) {
+          const newStock = (product.total_stock || 0) - quantityChange;
+          return {
+            ...product,
+            total_stock: Math.max(0, newStock)
+          };
+        }
+        return product;
+      })
+    );
   };
 
   const handleValidateSale = async () => {
@@ -209,6 +268,26 @@ const Caisse = () => {
         description: `Vente ${reference} enregistrée avec succès`,
       });
 
+      // Mettre à jour les quantités en temps réel sans recharger tous les produits
+      cart.forEach(item => {
+        let quantityChange = 0;
+        
+        // Calculer la quantité à soustraire en fonction du type d'unité
+        switch(item.unit_type) {
+          case 'bottle':
+            quantityChange = item.qty;
+            break;
+          case 'half_case':
+            quantityChange = item.qty * Math.ceil(item.bottles_per_case / 2);
+            break;
+          case 'full_case':
+            quantityChange = item.qty * item.bottles_per_case;
+            break;
+        }
+        
+        updateProductStock(item.id, quantityChange);
+      });
+      
       setCart([]);
     } catch (error: any) {
       console.error('Erreur lors de la vente:', error);
@@ -330,28 +409,64 @@ const Caisse = () => {
                   <div className="space-y-2">
                     <button
                       onClick={() => addToCart(product, 'bottle')}
-                      className="w-full text-left p-2 rounded hover:bg-muted transition-colors flex justify-between items-center"
+                      disabled={!product.total_stock || product.total_stock === 0}
+                      className={`w-full text-left p-2 rounded transition-colors flex justify-between items-center ${
+                        product.total_stock && product.total_stock > 0 
+                          ? 'hover:bg-muted' 
+                          : 'opacity-50 cursor-not-allowed'
+                      }`}
                     >
-                      <span className="text-sm">Bouteille</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Bouteille</span>
+                        {product.total_stock !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            ({product.total_stock} disponible{product.total_stock !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
                       <span className="font-bold text-primary">{product.price_per_bottle} FC</span>
                     </button>
                     {product.price_half_case && (
                       <button
-                        onClick={() => addToCart(product, 'half_case')}
-                        className="w-full text-left p-2 rounded hover:bg-muted transition-colors flex justify-between items-center"
-                      >
+                      onClick={() => addToCart(product, 'half_case')}
+                      disabled={!product.total_stock || product.total_stock < (product.bottles_per_case / 2)}
+                      className={`w-full text-left p-2 rounded transition-colors flex justify-between items-center ${
+                        product.total_stock && product.total_stock >= (product.bottles_per_case / 2)
+                          ? 'hover:bg-muted' 
+                          : 'opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
                         <span className="text-sm">Demi-casier</span>
-                        <span className="font-bold text-primary">{product.price_half_case} FC</span>
-                      </button>
+                        {product.total_stock !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            ({Math.floor(product.total_stock / (product.bottles_per_case / 2))} disponible{Math.floor(product.total_stock / (product.bottles_per_case / 2)) !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-bold text-primary">{product.price_half_case} FC</span>
+                    </button>
                     )}
                     {product.price_full_case && (
                       <button
-                        onClick={() => addToCart(product, 'full_case')}
-                        className="w-full text-left p-2 rounded hover:bg-muted transition-colors flex justify-between items-center"
-                      >
+                      onClick={() => addToCart(product, 'full_case')}
+                      disabled={!product.total_stock || product.total_stock < product.bottles_per_case}
+                      className={`w-full text-left p-2 rounded transition-colors flex justify-between items-center ${
+                        product.total_stock && product.total_stock >= product.bottles_per_case
+                          ? 'hover:bg-muted' 
+                          : 'opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
                         <span className="text-sm">Casier complet</span>
-                        <span className="font-bold text-primary">{product.price_full_case} FC</span>
-                      </button>
+                        {product.total_stock !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            ({Math.floor(product.total_stock / product.bottles_per_case)} disponible{Math.floor(product.total_stock / product.bottles_per_case) !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-bold text-primary">{product.price_full_case} FC</span>
+                    </button>
                     )}
                   </div>
                 </div>

@@ -108,18 +108,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         isCollapsed && !isMobile ? "justify-center px-2" : "justify-between"
       )}>
         {(!isCollapsed || isMobile) && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Package className="h-5 w-5 text-primary-foreground" />
-            </div>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/assets/logo.png" 
+              alt="Logo Botes Depot" 
+              className="h-8 w-8 object-contain"
+            />
             <span className="text-xl font-bold text-primary">Botes Depot</span>
           </div>
         )}
 
         {isCollapsed && !isMobile && (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Package className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img 
+            src="/assets/logo.png" 
+            alt="Logo" 
+            className="h-8 w-8 object-contain"
+          />
         )}
 
         {/* Bouton toggle - seulement sur desktop */}
