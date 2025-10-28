@@ -209,22 +209,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tendance</CardTitle>
-                  {stats.trendPercentage >= 0 ? (
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${stats.trendPercentage >= 0 ? 'text-success' : 'text-destructive'}`}>
-                    {stats.trendPercentage >= 0 ? '+' : ''}{stats.trendPercentage.toFixed(1)}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">vs hier</p>
-                </CardContent>
-              </Card>
             </>
           ) : (
             <>
@@ -258,15 +242,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tendance</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-success">+12%</div>
-                </CardContent>
-              </Card>
             </>
           )}
         </div>
